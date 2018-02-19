@@ -39,6 +39,10 @@ namespace JsonTest
 
                             // Get sensor data
                             SensorData data = GetSensorData(sensor.sensorsID);
+
+                            // Start the output JSON file
+                            File.WriteAllText(@"out/output.json", "[");
+                            Boolean first = true;
                             
                             foreach (SensorDataEntry reading in data.message.lists)
                             {
@@ -46,7 +50,37 @@ namespace JsonTest
                                 int fillLevel = CalculateFillLevel(data.message.depthWhenEmpty_cm,  data.message.distanceSensorToFillLine_cm, reading.ultrasound);
                                 Console.WriteLine(String.Format("           Fill level: {0}", fillLevel));
                                 Console.WriteLine(String.Format("           Temperature: {0}", reading.temperatureValue));
+
+                                if (fillLevel < 0)
+                                {
+                                    Console.WriteLine("> " + data.message.depthWhenEmpty_cm);
+                                    Console.WriteLine("> " + data.message.distanceSensorToFillLine_cm);
+                                    Console.WriteLine("> " + reading.ultrasoundExist);
+                                    Console.WriteLine("> " + reading.ultrasound);
+                                }
+
+                                BinSensorReading message = new BinSensorReading
+                                {
+                                    sesnorID = detail.message.sensorsID,
+                                    binID = detail.message.currentPinAllocated.projectpinID,
+                                    binName = detail.message.currentPinAllocated.name,
+                                    binCategory = detail.message.currentPinAllocated.pinType.pinTypeName,
+                                    latitude = detail.message.currentPinAllocated.latitude,
+                                    longitude = detail.message.currentPinAllocated.longitude,
+                                    fillLevel = fillLevel,
+                                    temperature = reading.temperatureValue,
+                                    timestampdata = reading.timestampdata
+                                };
+
+                                if (!first)
+                                {
+                                    File.AppendAllText(@"out/output.json", ",");
+                                }
+                                File.AppendAllText(@"out/output.json", JsonConvert.SerializeObject(message));
+                                first = false;
                             }
+
+                            File.AppendAllText(@"out/output.json", "]");
                         }
                     } 
                 }
