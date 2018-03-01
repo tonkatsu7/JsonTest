@@ -7,35 +7,54 @@ using System.Reactive.Linq;
 
 namespace JsonTest
 {
+
     class Program
     {
+        public class SensorDataAll
+        {
+            public SensorDataEntry data { get; set; }
+            public SensorDetailMessage detail { get; set; }
+        }
+
         static void Main(string[] args)
         {
-            SensorData data = GetSensorData(38);
+            /*
+            [sensorData] => [sensorDetail, sensorData] => [BinSensorReading]
+             */
 
-            Console.WriteLine(String.Format("We have {0}  records", data.message.lists.Length));
+            SensorData dataAsArray = GetSensorData(38);
+
+            Console.WriteLine(String.Format("We have {0}  records", dataAsArray.message.lists.Length));
 
             var source = Observable
                             .Interval(TimeSpan.FromSeconds(1))
                             .Do(x => Console.WriteLine(String.Format("IDX={0}", x)))
-                            .Select(i => data.message.lists[i % data.message.lists.Length]);
+                            .Select(idx => dataAsArray.message.lists[idx % dataAsArray.message.lists.Length]);
                             // .Do(x => Console.WriteLine(JsonConvert.SerializeObject(x)));
 
             source
-                .Select(x => 
+                .Select(sensorDataEntry => 
+                    new SensorDataAll 
+                    {
+                        detail = GetSensorDetail(sensorDataEntry.sensorallocatedID).message,
+                        data = sensorDataEntry
+                    })
+                // .Do(x => Console.WriteLine(JsonConvert.SerializeObject(x)))
+                .Select(_ => 
                             new BinSensorReading
                             {
-                                sesnorID = 98,
-                                binID = 667,
-                                binName = "Random Smart Sensor Simulator Module",
-                                binCategory = "Smart Sensor Simulator ",
-                                latitude = -33.869033,
-                                longitude = 151.208895,
-                                fillLevel = CalculateFillLevel(data.message.depthWhenEmpty_cm,  data.message.distanceSensorToFillLine_cm, x.ultrasound),
-                                temperature = x.temperatureValue,
-                                timestampdata = x.timestampdata
+                                sesnorID = _.detail.sensorsID, // 98,
+                                binID = _.detail.currentPinAllocated.projectpinID, // 667,
+                                binName = _.detail.currentPinAllocated.name, // "Random Smart Sensor Simulator Module",
+                                binCategory = _.detail.currentPinAllocated.pinType.pinTypeName, // "Smart Sensor Simulator ",
+                                latitude = _.detail.currentPinAllocated.latitude, // -33.869033,
+                                longitude = _.detail.currentPinAllocated.longitude, //151.208895,
+                                fillLevel = CalculateFillLevel(_.detail.currentPinAllocated.pinType.depthWhenEmpty_cm,  _.detail.currentPinAllocated.pinType.distanceSensorToFillLine_cm, _.data.ultrasound),
+                                temperature = _.data.temperatureValue,
+                                timestampdata = _.data.timestampdata
                             })
-                .Do(x => Console.WriteLine(String.Format("FillLevel={0}", x.fillLevel)))
+                // .Do(x => Console.WriteLine(String.Format("FillLevel={0}", x.fillLevel)))
+                .Do(x => Console.WriteLine(JsonConvert.SerializeObject(x)))
                 .Subscribe(_ => Console.WriteLine($"{DateTime.Now} - Sent message"),
                             ex =>
                             {
