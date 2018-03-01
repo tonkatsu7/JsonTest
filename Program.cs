@@ -10,11 +10,11 @@ namespace JsonTest
 
     class Program
     {
-        public class SensorDataAll
-        {
-            public SensorDataEntry data { get; set; }
-            public SensorDetailMessage detail { get; set; }
-        }
+        // public class SensorDataAll
+        // {
+        //     public SensorDataEntry data { get; set; }
+        //     public SensorDetailMessage detail { get; set; }
+        // }
 
         static void Main(string[] args)
         {
@@ -34,11 +34,11 @@ namespace JsonTest
 
             source
                 .Select(sensorDataEntry => 
-                    new SensorDataAll 
-                    {
-                        detail = GetSensorDetail(sensorDataEntry.sensorallocatedID).message,
-                        data = sensorDataEntry
-                    })
+                                            new
+                                            {
+                                                detail = GetSensorDetail(sensorDataEntry.sensorallocatedID).message,
+                                                data = sensorDataEntry
+                                            })
                 // .Do(x => Console.WriteLine(JsonConvert.SerializeObject(x)))
                 .Select(_ => 
                             new BinSensorReading
@@ -57,11 +57,11 @@ namespace JsonTest
                 .Do(x => Console.WriteLine(JsonConvert.SerializeObject(x)))
                 .Subscribe(_ => Console.WriteLine($"{DateTime.Now} - Sent message"),
                             ex =>
-                            {
-                                Console.WriteLine(DateTime.Now + " - Error " + ex.Message);
-                                Console.WriteLine(ex.ToString());
-                                Console.WriteLine();
-                            });
+                                {
+                                    Console.WriteLine(DateTime.Now + " - Error " + ex.Message);
+                                    Console.WriteLine(ex.ToString());
+                                    Console.WriteLine();
+                                });
             Console.ReadKey();
 
             // // Get all sensors
