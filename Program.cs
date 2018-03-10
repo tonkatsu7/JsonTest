@@ -4,41 +4,50 @@ using Newtonsoft.Json;
 using System.Linq;
 using System.Reactive;
 using System.Reactive.Linq;
+using System.Collections.Generic;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Text;
 
 namespace JsonTest
 {
 
     class Program
     {
-        // public class SensorDataAll
-        // {
-        //     public SensorDataEntry data { get; set; }
-        //     public SensorDetailMessage detail { get; set; }
-        // }
-
         static void Main(string[] args)
         {
             /*
             [sensorData] => [sensorDetail, sensorData] => [BinSensorReading]
              */
 
-            SensorData dataAsArray = GetSensorData(38);
+            // SensorData dataAsArray = GetSensorData(38);
+            // Console.WriteLine(String.Format("We have {0}  records", dataAsArray.message.lists.Length));
 
-            Console.WriteLine(String.Format("We have {0}  records", dataAsArray.message.lists.Length));
+            int interval = 86400;
 
             var source = Observable
                             .Interval(TimeSpan.FromSeconds(1))
                             .Do(x => Console.WriteLine(String.Format("IDX={0}", x)))
-                            .Select(idx => dataAsArray.message.lists[idx % dataAsArray.message.lists.Length]);
+                            // .Select(idx => dataAsArray.message.lists[idx % dataAsArray.message.lists.Length]);
                             // .Do(x => Console.WriteLine(JsonConvert.SerializeObject(x)));
+                            .SelectMany(async idx => 
+                            {
+                                return await FetchSensorDataAsync(38, DateTimeOffset.FromUnixTimeSeconds(1515890278 + idx * interval), new TimeSpan(0, 0, interval));
+                            }); // flatten from Task<List<SensorDataEntry> to List<SensorDataEntry>
+
+            // IEnumerable<SensorDataEntry> enums = dataAsArray.message.lists;
+            // var source2 = enums.ToObservable();
 
             source
-                .Select(sensorDataEntry => 
-                                            new
-                                            {
-                                                detail = GetSensorDetail(sensorDataEntry.sensorallocatedID).message,
-                                                data = sensorDataEntry
-                                            })
+                .SelectMany(_ => _) // flatten from List<SensorDataEntry> to SensorDataEntry
+                .Select(_ => 
+                            new
+                            {
+                                detail = GetSensorDetail(_.sensorallocatedID).message,
+                                data = _
+                            })
                 // .Do(x => Console.WriteLine(JsonConvert.SerializeObject(x)))
                 .Select(_ => 
                             new BinSensorReading
@@ -63,85 +72,6 @@ namespace JsonTest
                                     Console.WriteLine();
                                 });
             Console.ReadKey();
-
-            // // Get all sensors
-            // SensorList sensors = GetSensorList();
-
-            // if (sensors != null)
-            // {
-            //     SensorListEntry[] sensorList = sensors.message.lists;
-            //     Console.WriteLine(String.Format("There are {0} total sensors", sensorList.Length));
-            //     Console.WriteLine(String.Format("There are {0} allocated sensors", sensorList.Where(sensor => sensor.Allocated).Count()));
-
-            //     foreach (SensorListEntry sensor in sensorList)
-            //     {
-            //         // Only allocated sensors
-            //         if (sensor.Allocated)
-            //         {
-            //             Console.WriteLine(String.Format("Sensor ID {0} named {1} is enabled", sensor.sensorsID, sensor.sensorName));
-
-            //             // Get sensor details
-            //             SensorDetail detail = GetSensorDetail(sensor.sensorsID);
-
-            //             if (detail != null)
-            //             {
-            //                 Console.WriteLine(String.Format("   Sensor ID: {0}", detail.message.sensorsID));
-            //                 Console.WriteLine(String.Format("   Bin ID: {0}", detail.message.currentPinAllocated.projectpinID));
-            //                 Console.WriteLine(String.Format("   Bin name: {0}", detail.message.currentPinAllocated.name));
-            //                 Console.WriteLine(String.Format("   Bin category: {0}", detail.message.currentPinAllocated.pinType.pinTypeName));
-            //                 Console.WriteLine(String.Format("   Location.latitude: {0}", detail.message.currentPinAllocated.latitude));
-            //                 Console.WriteLine(String.Format("   Location.longitude: {0}", detail.message.currentPinAllocated.longitude));
-
-            //                 // Get sensor data
-            //                 SensorData data = GetSensorData(sensor.sensorsID);
-
-            //                 // Start the output JSON file
-            //                 File.WriteAllText(@"out/output.json", "[");
-            //                 Boolean first = true;
-                            
-            //                 foreach (SensorDataEntry reading in data.message.lists)
-            //                 {
-            //                     Console.WriteLine(String.Format("       New reading @ Timestamp: {0}", reading.Timestamp));
-            //                     int fillLevel = CalculateFillLevel(data.message.depthWhenEmpty_cm,  data.message.distanceSensorToFillLine_cm, reading.ultrasound);
-            //                     Console.WriteLine(String.Format("           Fill level: {0}", fillLevel));
-            //                     Console.WriteLine(String.Format("           Temperature: {0}", reading.temperatureValue));
-
-            //                     if (fillLevel < 0)
-            //                     {
-            //                         Console.WriteLine("> " + data.message.depthWhenEmpty_cm);
-            //                         Console.WriteLine("> " + data.message.distanceSensorToFillLine_cm);
-            //                         Console.WriteLine("> " + reading.ultrasoundExist);
-            //                         Console.WriteLine("> " + reading.ultrasound);
-            //                     }
-
-            //                     BinSensorReading message = new BinSensorReading
-            //                     {
-            //                         sesnorID = detail.message.sensorsID,
-            //                         binID = detail.message.currentPinAllocated.projectpinID,
-            //                         binName = detail.message.currentPinAllocated.name,
-            //                         binCategory = detail.message.currentPinAllocated.pinType.pinTypeName,
-            //                         latitude = detail.message.currentPinAllocated.latitude,
-            //                         longitude = detail.message.currentPinAllocated.longitude,
-            //                         fillLevel = fillLevel,
-            //                         temperature = reading.temperatureValue,
-            //                         timestampdata = reading.timestampdata
-            //                     };
-
-            //                     // Prepend a comma if not first element in output array
-            //                     if (!first)
-            //                     {
-            //                         File.AppendAllText(@"out/output.json", ",");
-            //                     }
-            //                     // Send message
-            //                     File.AppendAllText(@"out/output.json", JsonConvert.SerializeObject(message));
-            //                     first = false;
-            //                 }
-
-            //                 File.AppendAllText(@"out/output.json", "]");
-            //             }
-            //         } 
-            //     }
-            // }
         }
 
         private static SensorList GetSensorList()
@@ -168,11 +98,42 @@ namespace JsonTest
             }
         }
 
+        private static async Task<List<SensorDataEntry>> FetchSensorDataAsync(int sensorId, DateTimeOffset from, TimeSpan duration)
+        {
+            long fromUnixTime = from.ToUnixTimeSeconds();
+            long toUnixTime = fromUnixTime + Convert.ToInt64(duration.TotalSeconds);
+
+            string baseUrl = "https://dashboard.smartsensor.com.au/";
+            string rawSensorDataUrl = $"api/sensors/rawsensordata/{sensorId}?dmin={fromUnixTime}&dmax={toUnixTime}";
+
+            using (var client = new HttpClient())
+            {
+                string url = baseUrl + rawSensorDataUrl;
+                var body = new
+                {
+                    deviceID = "ABCD-EFGH-IJKL-MNOP",
+                    token = "544dfc3d64f4c9d0e60c91fbc0710ef8"
+                };
+                HttpResponseMessage response = await client.PostAsync(url, new StringContent(JsonConvert.SerializeObject(body), Encoding.UTF8, "application/json"));
+                // response.EnsureSuccessStatusCode();
+                if (response.IsSuccessStatusCode)
+                {
+                    string result = await response.Content.ReadAsStringAsync();
+                    var rootJson = JsonConvert.DeserializeObject<SensorData>(result);
+                    var arr = rootJson.message.lists;
+                    var lst = arr.OfType<SensorDataEntry>().ToList();
+                    // Console.WriteLine($"API call returned {lst.Count} entries");
+                    return lst;
+                }
+                else
+                {
+                    return new List<SensorDataEntry>();
+                }
+            }
+        }
+
         private static int CalculateFillLevel(int depthWhenEmpty, int distanceToFillLine, int ultrasound)
         {
-            // int fillLevelInCMs = depthWhenEmpty + distanceToFillLine - ultrasound;
-            // decimal fillLevelPercentage = Convert.ToDecimal(fillLevelInCMs)/Convert.ToDecimal(depthWhenEmpty) * 100;
-            // return Convert.ToInt32(Math.Round(fillLevelPercentage));
             return Convert.ToInt32(
                 Math.Round(
                     Convert.ToDecimal(depthWhenEmpty + distanceToFillLine - ultrasound)
