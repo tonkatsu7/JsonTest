@@ -1,4 +1,8 @@
-﻿using System;
+﻿using SmartSesnor;
+using IoTAA;
+using DeviceSimulator;
+
+using System;
 using System.IO;
 using Newtonsoft.Json;
 using System.Linq;
@@ -13,7 +17,6 @@ using System.Text;
 
 namespace JsonTest
 {
-
     class Program
     {
         static void Main(string[] args)
@@ -25,45 +28,49 @@ namespace JsonTest
             // SensorData dataAsArray = GetSensorData(38);
             // Console.WriteLine(String.Format("We have {0}  records", dataAsArray.message.lists.Length));
 
-            int interval = 86400;
+            // int interval = 86400;
+
+            DeviceGenerator device = new RandomBin(38);
 
             var source = Observable
                             .Interval(TimeSpan.FromSeconds(1))
                             .Do(x => Console.WriteLine(String.Format("IDX={0}", x)))
                             // .Select(idx => dataAsArray.message.lists[idx % dataAsArray.message.lists.Length]);
-                            // .Do(x => Console.WriteLine(JsonConvert.SerializeObject(x)));
-                            .SelectMany(async idx => 
-                            {
-                                return await FetchSensorDataAsync(38, DateTimeOffset.FromUnixTimeSeconds(1515890278 + idx * interval), new TimeSpan(0, 0, interval));
-                            }); // flatten from Task<List<SensorDataEntry> to List<SensorDataEntry>
+                            // .SelectMany(async idx => 
+                            // {
+                            //     return await FetchSensorDataAsync(38, DateTimeOffset.FromUnixTimeSeconds(1515890278 + idx * interval), new TimeSpan(0, 0, interval));
+                            // }); // flatten from Task<List<SensorDataEntry> to List<SensorDataEntry>
+                            .Select(_ => device.Next())
+                            .Do(x => Console.WriteLine(JsonConvert.SerializeObject(x)));
 
             // IEnumerable<SensorDataEntry> enums = dataAsArray.message.lists;
             // var source2 = enums.ToObservable();
 
+            // source
+            //     // .SelectMany(_ => _) // flatten from List<SensorDataEntry> to SensorDataEntry
+            //     .Select(_ => 
+            //                 new
+            //                 {
+            //                     detail = GetSensorDetail(_.sensorallocatedID).message,
+            //                     data = _
+            //                 })
+            //     // .Do(x => Console.WriteLine(JsonConvert.SerializeObject(x)))
+            //     .Select(_ => 
+            //                 new BinSensorReading
+            //                 {
+            //                     sesnorID = _.detail.sensorsID, // 98,
+            //                     binID = _.detail.currentPinAllocated.projectpinID, // 667,
+            //                     binName = _.detail.currentPinAllocated.name, // "Random Smart Sensor Simulator Module",
+            //                     binCategory = _.detail.currentPinAllocated.pinType.pinTypeName, // "Smart Sensor Simulator ",
+            //                     latitude = _.detail.currentPinAllocated.latitude, // -33.869033,
+            //                     longitude = _.detail.currentPinAllocated.longitude, //151.208895,
+            //                     fillLevel = CalculateFillLevel(_.detail.currentPinAllocated.pinType.depthWhenEmpty_cm,  _.detail.currentPinAllocated.pinType.distanceSensorToFillLine_cm, _.data.ultrasound),
+            //                     temperature = _.data.temperatureValue,
+            //                     timestampdata = _.data.timestampdata
+            //                 })
+            //     // .Do(x => Console.WriteLine(String.Format("FillLevel={0}", x.fillLevel)))
+            //     .Do(x => Console.WriteLine(JsonConvert.SerializeObject(x)))
             source
-                .SelectMany(_ => _) // flatten from List<SensorDataEntry> to SensorDataEntry
-                .Select(_ => 
-                            new
-                            {
-                                detail = GetSensorDetail(_.sensorallocatedID).message,
-                                data = _
-                            })
-                // .Do(x => Console.WriteLine(JsonConvert.SerializeObject(x)))
-                .Select(_ => 
-                            new BinSensorReading
-                            {
-                                sesnorID = _.detail.sensorsID, // 98,
-                                binID = _.detail.currentPinAllocated.projectpinID, // 667,
-                                binName = _.detail.currentPinAllocated.name, // "Random Smart Sensor Simulator Module",
-                                binCategory = _.detail.currentPinAllocated.pinType.pinTypeName, // "Smart Sensor Simulator ",
-                                latitude = _.detail.currentPinAllocated.latitude, // -33.869033,
-                                longitude = _.detail.currentPinAllocated.longitude, //151.208895,
-                                fillLevel = CalculateFillLevel(_.detail.currentPinAllocated.pinType.depthWhenEmpty_cm,  _.detail.currentPinAllocated.pinType.distanceSensorToFillLine_cm, _.data.ultrasound),
-                                temperature = _.data.temperatureValue,
-                                timestampdata = _.data.timestampdata
-                            })
-                // .Do(x => Console.WriteLine(String.Format("FillLevel={0}", x.fillLevel)))
-                .Do(x => Console.WriteLine(JsonConvert.SerializeObject(x)))
                 .Subscribe(_ => Console.WriteLine($"{DateTime.Now} - Sent message"),
                             ex =>
                                 {
@@ -134,14 +141,21 @@ namespace JsonTest
 
         private static int CalculateFillLevel(int depthWhenEmpty, int distanceToFillLine, int ultrasound)
         {
-            return Convert.ToInt32(
-                Math.Round(
-                    Convert.ToDecimal(depthWhenEmpty + distanceToFillLine - ultrasound)
-                    /
-                    Convert.ToDecimal(depthWhenEmpty) 
-                    * 
-                    100)
-                );
+            if (ultrasound == depthWhenEmpty + distanceToFillLine)
+            {
+                return 0;
+            }
+            else 
+            {
+                return Convert.ToInt32(
+                    Math.Round(
+                        Convert.ToDecimal(depthWhenEmpty + distanceToFillLine - ultrasound)
+                        /
+                        Convert.ToDecimal(depthWhenEmpty) 
+                        * 
+                        100)
+                    );
+            }
         }
     }
 }

@@ -9,7 +9,7 @@
 //------------------------------------------------------------------------------
 using System.Runtime.Serialization;
 
-namespace JsonTest
+namespace SmartSesnor
 {
     // Type created for JSON at <<root>>
     [DataContractAttribute()]

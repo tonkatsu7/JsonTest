@@ -10,23 +10,23 @@
 using System;
 using System.Runtime.Serialization;
 
-namespace JsonTest
+namespace SmartSesnor
 {
     // Type created for JSON at <<root>>
     [DataContractAttribute()]
-    public partial class SensorData
+    public partial class SensorList
     {
         
         [DataMemberAttribute()]
         public string status;
         
         [DataMemberAttribute()]
-        public SensorDataMessage message;
+        public SensorListMessage message;
     }
 
     // Type created for JSON at <<root>> --> message
     [DataContractAttribute(Name="message")]
-    public partial class SensorDataMessage
+    public partial class SensorListMessage
     {
         
         [DataMemberAttribute()]
@@ -42,31 +42,25 @@ namespace JsonTest
         public int start;
         
         [DataMemberAttribute()]
-        public int depthWhenEmpty_cm;
+        public int total;
         
         [DataMemberAttribute()]
-        public int distanceSensorToFillLine_cm;
-        
-        [DataMemberAttribute()]
-        public SensorDataEntry[] lists;
+        public SensorListEntry[] lists;
     }
 
     // Type created for JSON at <<root>> --> message --> lists
     [DataContractAttribute(Name="lists")]
-    public partial class SensorDataEntry
+    public partial class SensorListEntry
     {
         
         [DataMemberAttribute()]
-        public int sensorsdataID;
+        public int sensorsID;
         
         [DataMemberAttribute()]
         public int sensorstokenID;
         
         [DataMemberAttribute()]
-        public int sensorallocatedID;
-        
-        [DataMemberAttribute()]
-        public string sensorEventID;
+        public string sensorCompany;
         
         [DataMemberAttribute()]
         public string sensorDeviceID;
@@ -75,57 +69,39 @@ namespace JsonTest
         public string firmwareVersion;
         
         [DataMemberAttribute()]
-        public string headerMethod;
+        public string sensorName;
         
         [DataMemberAttribute()]
-        public string reason;
-        
-        [DataMemberAttribute()]
-        public string temperatureExist;
-        
-        [DataMemberAttribute()]
-        public double temperatureValue;
-        
-        [DataMemberAttribute()]
-        public string temperatureOkay;
-        
-        [DataMemberAttribute()]
-        public double accelerometer_x;
-        
-        [DataMemberAttribute()]
-        public double accelerometer_y;
-        
-        [DataMemberAttribute()]
-        public double accelerometer_z;
-        
-        [DataMemberAttribute()]
-        public string ultrasoundExist;
-        
-        [DataMemberAttribute()]
-        public int ultrasound;
-        
-        [DataMemberAttribute()]
-        public int batteryVoltage_mV;
-        
-        [DataMemberAttribute()]
-        public string signalStrengthExist;
-        
-        [DataMemberAttribute()]
-        public double signalStrength_rssi_dbm;
-        
-        [DataMemberAttribute()]
-        public int signalStrength_bitErrorRate;
-        
-        [DataMemberAttribute()]
-        public int timestampdata;
+        public string isAllocated;
 
         [IgnoreDataMember]
-        public string Timestamp
-        {
-            get
-            {
-                return (new DateTime(1970, 1, 1).AddSeconds(Convert.ToInt64(timestampdata))).ToLocalTime().ToString();
-            }
+        public Boolean Allocated 
+        { 
+            get 
+            { 
+                return (isAllocated == "Y") ? true: false; 
+            } 
         }
+        
+        [DataMemberAttribute()]
+        public string description;
+        
+        [DataMemberAttribute()]
+        public int companyID;
+        
+        [DataMemberAttribute()]
+        public int createdDate;
+        
+        [DataMemberAttribute()]
+        public int updatedDate;
+        
+        [DataMemberAttribute()]
+        public int createdByUserID;
+        
+        [DataMemberAttribute()]
+        public int updatedByUserID;
+        
+        [DataMemberAttribute()]
+        public object latest_sensorsdata;
     }
 }
