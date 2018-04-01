@@ -1,8 +1,11 @@
+using System.Collections.Generic;
+
 namespace DeviceSimulator
 {
     public abstract class DeviceGenerator
     {
-        public abstract DeviceMessage Next();
-        public abstract DeviceMessage Next(int seq);
+        public abstract void Init();
+        public abstract List<DeviceMessage> Next();
+        public abstract List<DeviceMessage> Next(int seq);
     }
 }

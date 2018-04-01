@@ -50,7 +50,7 @@
                 "pinTypeCreatedByUserID": 37,
                 "pinTypeModifiedDate": 1500614114,
                 "pinTypeModifiedByUserID": 37,
-                "depthWhenEmpty_cm": 110,
+                "depthWhenEmpty_cm": 90,
                 "distanceSensorToFillLine_cm": 10,
                 "total_projectpins": 2
             }
