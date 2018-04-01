@@ -44,7 +44,7 @@ namespace JsonTest
                     device = new FileBin(deviceId, "data");
                     break;
                 case DataSource.API:
-                    device = new ApiBin(deviceId, ApiBin.TimeInterval.DAILY);
+                    device = new ApiBin(deviceId, ApiBin.TimeInterval.FOUR_HOURLY);
                     break;
                 case DataSource.Random:
                 default:
@@ -61,7 +61,8 @@ namespace JsonTest
                             //     return await FetchSensorDataAsync(38, DateTimeOffset.FromUnixTimeSeconds(1500613837 + idx * interval), new TimeSpan(0, 0, interval));
                             // }); // flatten from Task<List<SensorDataEntry> to List<SensorDataEntry>
                             .Select(_ => device.Next())
-                            .Do(x => Console.WriteLine(JsonConvert.SerializeObject(x)));
+                            // .Do(x => Console.WriteLine(JsonConvert.SerializeObject(x)))
+                            ;
 
             // IEnumerable<SensorDataEntry> enums = dataAsArray.message.lists;
             // var source2 = enums.ToObservable();

@@ -77,6 +77,7 @@ namespace SmartSesnor
                     });
             return enums.ToList();
         }
+        
         public override List<DeviceMessage> Next(int seq) 
         {
             return Next();
